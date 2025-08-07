@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPA Newsletter Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&family=Roboto+Slab:wght@300;400;500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #f8fafc; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .auth-section, .newsletter-form { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .newsletter-preview { background: white; padding: 2rem; border-radius: 8px; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: #1f2937; text-align: center; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #1f2937; }
+        input, select, textarea { width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; }
+        button { background: #1e3a8a; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        button:hover { background: #2563eb; }
+        .status-message { margin: 1rem 0; padding: 0.75rem; border-radius: 4px; }
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .newsletter { max-width: 210mm; margin: 0 auto; background: white; }
+        .newsletter-header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #fbbf24 100%); color: white; padding: 2rem; text-align: center; page-break-inside: avoid; }
+        .newsletter-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; margin-bottom: 0.5rem; }
+        .newsletter-date { font-size: 14px; background: rgba(255,255,255,0.15); padding: 6px 15px; border-radius: 8px; }
+        .cover-page, .back-cover-page { width: 210mm; height: 297mm; object-fit: cover; page-break-after: always; }
+        .toc-page { padding: 1rem; background: white; page-break-inside: avoid; }
+        .toc-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 1rem; }
+        .toc-item { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-family: 'Source Sans 3', sans-serif; font-size: 12px; }
+        .article { page-break-inside: avoid; margin: 1rem; }
+        .article img { max-width: 200px; height: auto; border-radius: 8px; }
+        .article-title { font-family: 'Roboto Slab', serif; font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
+        .article-text { font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #64748b; }
+        .qr-section { text-align: center; margin-top: 1rem; padding: 1rem; border-top: 2px solid #1e3a8a; }
+        .qr-section h3 { font-family: 'Roboto Slab', serif; font-size: 16px; font-weight: 600; margin-bottom: 0.5rem; }
+        .qr-section h4 { font-family: 'Roboto Slab', serif; font-size: 14px; font-weight: 500; margin-bottom: 0.5rem; }
+        .qr-section img { width: 80px; height: 80px; margin: 0.5rem auto; }
+        .newsletter-footer { background: #f8fafc; padding: 1rem; text-align: center; color: #64748b; border-top: 3px solid #1e3a8a; page-break-inside: avoid; }
+        .style-hero { background: #f8fafc; padding: 2rem; text-align: center; }
+        .style-hero .article-image { max-width: 100%; margin-bottom: 1rem; }
+        .style-sidebyside { display: flex; align-items: center; gap: 1rem; }
+        .style-sidebyside .article-image { flex: 1; max-width: 50%; }
+        .style-sidebyside .article-content { flex: 1; }
+        .style-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .style-magazine { background: white; padding: 1rem; border-left: 4px solid #1e3a8a; }
+        .style-overlay { position: relative; color: white; }
+        .style-overlay .article-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .style-overlay .article-content { background: linear-gradient(transparent, rgba(0,0,0,0.😎); color: white; padding: 1rem; width: 100%; }
+        .style-minimal { background: #f8fafc; padding: 1rem; text-align: center; }
+        .style-minimal .article-image { max-width: 200px; margin-bottom: 0.5rem; }
+        @media print {
+            .newsletter { margin: 0; }
+            .article, .newsletter-header, .newsletter-footer { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <h1>Σύνδεση</h1>
+            <label for="username">Όνομα Χρήστη (Email):</label>
+            <input type="email" id="username" placeholder="email@example.com">
+            <label for="password">Κωδικός:</label>
+            <input type="password" id="password" placeholder="Κωδικός">
+            <button onclick="login()">Σύνδεση</button>
+            <div class="status-message" id="authStatus"></div>
+        </div>
+
+        <!-- Newsletter Form (Hidden until login) -->
+        <div class="newsletter-form" id="newsletterForm" style="display: none;">
+            <h1>IPA Newsletter Generator</h1>
+            <label for="newsletterTitle">Τίτλος Newsletter:</label>
+            <input type="text" id="newsletterTitle" placeholder="Π.χ. IPA Newsletter">
+            <label for="newsletterMonth">Μήνας:</label>
+            <select id="newsletterMonth">
+                <option value="Ιανουάριος">Ιανουάριος</option>
+                <option value="Φεβρουάριος">Φεβρουάριος</option>
+                <option value="Μάρτιος">Μάρτιος</option>
+                <option value="Απρίλιος">Απρίλιος</option>
+                <option value="Μάιος">Μάιος</option>
+                <option value="Ιούνιος">Ιούνιος</option>
+                <option value="Ιούλιος">Ιούλιος</option>
+                <option value="Αύγουστος" selected>Αύγουστος</option>
+                <option value="Σεπτέμβριος">Σεπτέμβριος</option>
+                <option value="Οκτώβριος">Οκτώβριος</option>
+                <option value="Νοέμβριος">Νοέμβριος</option>
+                <option value="Δεκέμβριος">Δεκέμβριος</option>
+            </select>
+            <label for="newsletterYear">Έτος:</label>
+            <input type="number" id="newsletterYear" value="2025">
+            <label for="coverImage">Εξώφυλλο (JPG, A4 αναλογία):</label>
+            <input type="file" id="coverImage" accept="image/jpeg">
+            <label for="backCoverImage">Οπισθόφυλλο (JPG):</label>
+            <input type="file" id="backCoverImage" accept="image/jpeg">
+            <label for="articlesFile">Άρθρα (DOCX ή Text):</label>
+            <input type="file" id="articlesFile" accept=".docx,.txt">
+            <button onclick="generateNewsletter()">Δημιουργία Newsletter</button>
+            <button onclick="exportToDocx()">Εξαγωγή σε DOCX</button>
+            <button onclick="exportToHtml()">Εξαγωγή σε HTML</button>
+            <button onclick="exportToPdf()">Εξαγωγή σε PDF</button>
+            <button onclick="shareOnline()">Διαμοιρασμός Online</button>
+            <div class="status-message" id="status"></div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="newsletter-preview" id="newsletterPreview"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.28.0/docxtemplater.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // Firebase Configuration (Replace with your Firebase project details)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        // Translations
+        const translations = {
+            el: {
+                loginSuccess: "Επιτυχής σύνδεση!",
+                loginError: "Λάθος όνομα χρήστη ή κωδικός.",
+                coverImageError: "Το εξώφυλλο πρέπει να είναι JPG με αναλογία A4 (210x297mm).",
+                articleProcessingError: "Σφάλμα κατά την επεξεργασία του αρχείου άρθρων.",
+                newsletterGenerated: "Το newsletter δημιουργήθηκε με επιτυχία!",
+                docxExported: "Το newsletter εξήχθη σε DOCX!",
+                htmlExported: "Το newsletter εξήχθη σε HTML!",
+                pdfExported: "Το newsletter εξήχθη σε PDF!",
+                shareSuccess: "Το newsletter διαμοιράστηκε online!",
+                shareError: "Σφάλμα κατά τον διαμοιρασμό. Βεβαιωθείτε ότι είστε συνδεδεμένοι."
+            }
+        };
+
+        // Default IPA Houses
+        const defaultIpaHouses = [
+            { title: "Ξενώνας Νυμφαίου", content: "Το ελληνικό εθνικό τμήμα της ΙΡΑ από το 2016 απέκτησε ένα πολύτιμο περιουσιακό στοιχείο. Πρόκειται για το IPA House που δημιουργήθηκε στο Νυμφαίο Φλώρινας, στο κτίσμα του παλιού Αστυνομικού Σταθμού και αποτελεί πλέον τον ιδανικότερο..." },
+            { title: "Ξενώνας Χανίων", content: "Από της 10 Αυγούστου 2019, σε ένα μαγευτικό μέρος 15 περίπου χιλιόμετρα από την πόλη των Χανίων άρχισε να λειτουργεί ο Ξενώνας των Χανίων ΙΡΑ HOUSE Χανιά (Γεώργιος Κατσαρόπουλος)..." },
+            { title: "Ξενώνας Θεσσαλονίκης", content: "Ο Ξενώνας του Ελληνικού Εθνικού Τμήματος της Διεθνούς Ενώσεως Αστυνομικών στην Θεσσαλονίκη, στεγάζεται στον 6ο όροφο πολυκατοικίας επί της οδού Συγγρού 28..." },
+            { title: "Ξενώνας Χίου", content: "Ο Ξενώνας της Διεθνούς Ενώσεως Αστυνομικών στη Χίο, βρίσκεται 1,5 χλμ από το κέντρο της πόλης..." },
+            { title: "Ξενώνας Αθήνας", content: "Ο Ξενώνας της Διεθνούς Ενώσεως Αστυνομικών στην Αθήνα, βρίσκεται στον δεύτερο όροφο πολυκατοικίας επί της οδού Αχαρνών 21..." }
+        ];
+
+        // Sample Images
+        const sampleImages = [
+            "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=200&fit=crop",
+            "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=200&fit=crop",
+            "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=200&fit=crop",
+            "https://images.unsplash.com/photo-1593115057322-e94b77572f20?w=200&fit=crop"
+        ];
+
+        // Authentication
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(username, password)
+                .then(() => {
+                    showStatus(translations.el.loginSuccess, 'success', 'authStatus');
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('newsletterForm').style.display = 'block';
+                })
+                .catch(err => {
+                    console.error(err);
+                    showStatus(translations.el.loginError, 'error', 'authStatus');
+                });
+        }
+
+        // Status Message
+        function showStatus(message, type, elementId = 'status') {
+            const statusElement = document.getElementById(elementId);
+            statusElement.textContent = message;
+            statusElement.className = `status-message ${type}`;
+        }
+
+        // Generate QR Code
+        function generateQRCode(text) {
+            const qrCodeDiv = document.createElement('div');
+            new QRCode(qrCodeDiv, {
+                text: text,
+                width: 80,
+                height: 80
+            });
+            return qrCodeDiv.querySelector('img').src;
+        }
+
+        // Generate Newsletter
+        async function generateNewsletter() {
+            const title = document.getElementById('newsletterTitle').value || "IPA Newsletter";
+            const month = document.getElementById('newsletterMonth').value;
+            const year = document.getElementById('newsletterYear').value;
+            const coverImage = document.getElementById('coverImage').files[0];
+            const backCoverImage = document.getElementById('backCoverImage').files[0];
+            const articlesFile = document.getElementById('articlesFile').files[0];
+
+            // Validate Cover Image
+            let coverImageUrl = "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=595&h=842&fit=crop";
+            if (coverImage) {
+                const img = new Image();
+                img.src = URL.createObjectURL(coverImage);
+                await new Promise(resolve => img.onload = resolve);
+                const aspectRatio = img.width / img.height;
+                const a4Ratio = 210 / 297;
+                if (coverImage.type !== 'image/jpeg' || Math.abs(aspectRatio - a4Ratio) > 0.1) {
+                    showStatus(translations.el.coverImageError, 'error');
+                    return;
+                }
+                coverImageUrl = img.src;
+            }
+
+            // Back Cover Image
+            let backCoverImageUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=595&h=842&fit=crop";
+            if (backCoverImage) {
+                backCoverImageUrl = URL.createObjectURL(backCoverImage);
+            }
+
+            // Process Articles
+            let articles = [];
+            if (articlesFile) {
+                try {
+                    const arrayBuffer = await articlesFile.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    articles = result.value.split('\n\n').map((text, index) => ({
+                        title: text.split('\n')[0] || `Άρθρο ${index + 1}`,
+                        content: text.split('\n').slice(1).join('\n'),
+                        image: sampleImages[index % sampleImages.length]
+                    }));
+                } catch (err) {
+                    console.error(err);
+                    showStatus(translations.el.articleProcessingError, 'error');
+                    return;
+                }
+            }
+
+            // Combine Articles
+            const greekSectionArticles = articles.filter(a => a.title.includes("Ελληνικό Τμήμα"));
+            const otherArticles = articles.filter(a => !a.title.includes("Ελληνικό Τμήμα"));
+            const allArticles = [...greekSectionArticles, ...otherArticles, ...defaultIpaHouses];
+
+            // Generate Table of Contents
+            let toc = '<div class="toc-page"><h2 class="toc-title">Περιεχόμενα</h2>';
+            allArticles.forEach((article, index) => {
+                toc += `<div class="toc-item"><span>${article.title}</span><span>σελ. ${index + 3}</span></div>`;
+            });
+            toc += '</div>';
+
+            // Generate Articles
+            const styles = ['hero', 'sidebyside', 'card', 'magazine', 'overlay', 'minimal'];
+            let newsletterArticles = '';
+            allArticles.forEach((article, index) => {
+                const style = styles[index % styles.length];
+                let qrSection = '';
+                if (defaultIpaHouses.some(house => house.title === article.title)) {
+                    const region = article.title.replace("Ξενώνας ", "");
+                    qrSection = `
+                        <div class="qr-section">
+                            <h3>I.P.A. House Ελλάδας</h3>
+                            <h4>Ι.Ρ.Α. House ${region}</h4>
+                            <img src="${generateQRCode('https://www.ipa-gr.org/category/ipa/ipa-houses/')}" alt="QR Code">
+                            <p>Σαρώστε για προβολή του ξενώνα</p>
+                        </div>`;
+                }
+                newsletterArticles += `
+                    <div class="article style-${style}">
+                        <img src="${article.image}" alt="${article.title}" class="article-image">
+                        <div class="article-content">
+                            <h2 class="article-title">${article.title}</h2>
+                            <div class="article-text">${article.content}</div>
+                        </div>
+                        ${qrSection}
+                    </div>`;
+            });
+
+            // Generate Newsletter
+            const newsletter = `
+                <div class="cover-page">
+                    <img src="${coverImageUrl}" alt="Cover Page" class="cover-page">
+                </div>
+                <div class="newsletter-header">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0OCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNMTUgNTAgUTIwIDM1IDMwIDQwIFEyNSA0NSAyMCA1MCBRMjUgNTUgMzAgNjAgUTIwIDY1IDE1IDUwIiBmaWxsPSIjZmJiZjI0Ii8+PHBhdGggZD0iTTg1IDUwIFE4MCAzNSA3MCA0MCBRNzUgNDUgODAgNTAgUTc1IDU1IDcwIDYwIFE4MCA2NSA4NSA1MCIgZmlsbD0iI2ZiYmYyNCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjM1IiBmaWxsPSIjMWUzYThhIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMjUiIGZpbGw9IiNkYzI2MjYiIG9wYWNpdHk9IjAuOCIvPjxwYXRoIGQ9Ik0zMCA0NSBRNDAgNDAgNDUgNDUgUTUwIDQwIDYwIDQ1IFE2NSA1MCA2MCA1NSBRNTAgNjAgNDUgNTUgUTQwIDYwIDMwIDU1IFEyNSA1MCAzMCA0NSIgZmlsbD0iI2VmNDQ0NCIvPjx0ZXh0IHg9IjUwIiB5PSI4NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzFlM2E4YSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZvbnQtd2VpZ2h0PSJib2xkIj5JUEE8L3RleHQ+PHJlY3QgeD0iMjAiIHk9IjkwIiB3aWR0aD0iNjAiIGhlaWdodD0iOCIgZmlsbD0iIzFlM2E4YSIgcng9IjQiLz48dGV4dCB4PSI1MCIgeT0iOTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNSI+U0VSVk8gUEVSIEFNSUtFQ088L3RleHQ+PC9zdmc+" alt="IPA Logo" style="width: 80px; position: absolute; top: 20px; left: 20px;">
+                    <div class="ipa-logo">International Police Association Hellenic Section</div>
+                    <h1 class="newsletter-title">${title}</h1>
+                    <div class="newsletter-date">${month} ${year}</div>
+                </div>
+                ${toc}
+                ${newsletterArticles}
+                <div class="newsletter-footer">
+                    <div class="footer-logo">International Police Association Hellenic Section</div>
+                    <div class="footer-month">${month} ${year}</div>
+                    <p>© ${year} Όλα τα δικαιώματα κατοχυρωμένα</p>
+                    <p>Servo per Amikeco - Υπηρετώ δια της φιλίας</p>
+                </div>
+                <div class="back-cover-page">
+                    <img src="${backCoverImageUrl}" alt="Back Cover" class="back-cover-page">
+                </div>
+            `;
+
+            document.getElementById('newsletterPreview').innerHTML = `<div class="newsletter">${newsletter}</div>`;
+            showStatus(translations.el.newsletterGenerated, 'success');
+        }
+
+        // Export to DOCX
+        async function exportToDocx() {
+            const newsletter = document.getElementById('newsletterPreview').innerHTML;
+            const doc = new docxtemplater();
+            const zip = new JSZip();
+            zip.file("word/document.xml", `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">${newsletter}</w:document>`);
+            doc.loadZip(zip);
+            const blob = doc.getZip().generate({ type: 'blob' });
+            saveAs(blob, `IPA_Newsletter_${document.getElementById('newsletterYear').value}_${document.getElementById('newsletterMonth').value}.docx`);
+            showStatus(translations.el.docxExported, 'success');
+        }
+
+        // Export to HTML
+        function exportToHtml() {
+            const newsletter = document.getElementById('newsletterPreview').innerHTML;
+            const blob = new Blob([`
+                <!DOCTYPE html>
+                <html lang="el">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>IPA Newsletter</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&family=Roboto+Slab:wght@300;400;500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+                    <style>
+                        @page { margin: 0mm; size: A4; }
+                        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #f8fafc; }
+                        .newsletter { max-width: 210mm; margin: 0 auto; background: white; }
+                        .newsletter-header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #fbbf24 100%); color: white; padding: 2rem; text-align: center; page-break-inside: avoid; }
+                        .newsletter-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; margin-bottom: 0.5rem; }
+                        .newsletter-date { font-size: 14px; background: rgba(255,255,255,0.15); padding: 6px 15px; border-radius: 8px; }
+                        .cover-page, .back-cover-page { width: 210mm; height: 297mm; object-fit: cover; page-break-after: always; }
+                        .toc-page { padding: 1rem; background: white; page-break-inside: avoid; }
+                        .toc-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 1rem; }
+                        .toc-item { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-family: 'Source Sans 3', sans-serif; font-size: 12px; }
+                        .article { page-break-inside: avoid; margin: 1rem; }
+                        .article img { max-width: 200px; height: auto; border-radius: 8px; }
+                        .article-title { font-family: 'Roboto Slab', serif; font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
+                        .article-text { font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #64748b; }
+                        .qr-section { text-align: center; margin-top: 1rem; padding: 1rem; border-top: 2px solid #1e3a8a; }
+                        .qr-section h3 { font-family: 'Roboto Slab', serif; font-size: 16px; font-weight: 600; margin-bottom: 0.5rem; }
+                        .qr-section h4 { font-family: 'Roboto Slab', serif; font-size: 14px; font-weight: 500; margin-bottom: 0.5rem; }
+                        .qr-section img { width: 80px; height: 80px; margin: 0.5rem auto; }
+                        .newsletter-footer { background: #f8fafc; padding: 1rem; text-align: center; color: #64748b; border-top: 3px solid #1e3a8a; page-break-inside: avoid; }
+                        .style-hero { background: #f8fafc; padding: 2rem; text-align: center; }
+                        .style-hero .article-image { max-width: 100%; margin-bottom: 1rem; }
+                        .style-sidebyside { display: flex; align-items: center; gap: 1rem; }
+                        .style-sidebyside .article-image { flex: 1; max-width: 50%; }
+                        .style-sidebyside .article-content { flex: 1; }
+                        .style-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                        .style-magazine { background: white; padding: 1rem; border-left: 4px solid #1e3a8a; }
+                        .style-overlay { position: relative; color: white; }
+                        .style-overlay .article-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+                        .style-overlay .article-content { background: linear-gradient(transparent, rgba(0,0,0,0.😎); color: white; padding: 1rem; width: 100%; }
+                        .style-minimal { background: #f8fafc; padding: 1rem; text-align: center; }
+                        .style-minimal .article-image { max-width: 200px; margin-bottom: 0.5rem; }
+                        @media print {
+                            .newsletter { margin: 0; }
+                            .article, .newsletter-header, .newsletter-footer { break-inside: avoid; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="newsletter">${newsletter}</div>
+                </body>
+                </html>
+            `], { type: 'text/html' });
+            saveAs(blob, `IPA_Newsletter_${document.getElementById('newsletterYear').value}_${document.getElementById('newsletterMonth').value}.html`);
+            showStatus(translations.el.htmlExported, 'success');
+        }
+
+        // Export to PDF
+        function exportToPdf() {
+            const newsletter = document.getElementById('newsletterPreview').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="el">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>IPA Newsletter</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&family=Roboto+Slab:wght@300;400;500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+                    <style>
+                        @page { margin: 0mm; size: A4; }
+                        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #f8fafc; }
+                        .newsletter { max-width: 210mm; margin: 0 auto; background: white; }
+                        .newsletter-header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #fbbf24 100%); color: white; padding: 2rem; text-align: center; page-break-inside: avoid; }
+                        .newsletter-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; margin-bottom: 0.5rem; }
+                        .newsletter-date { font-size: 14px; background: rgba(255,255,255,0.15); padding: 6px 15px; border-radius: 8px; }
+                        .cover-page, .back-cover-page { width: 210mm; height: 297mm; object-fit: cover; page-break-after: always; }
+                        .toc-page { padding: 1rem; background: white; page-break-inside: avoid; }
+                        .toc-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 1rem; }
+                        .toc-item { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-family: 'Source Sans 3', sans-serif; font-size: 12px; }
+                        .article { page-break-inside: avoid; margin: 1rem; }
+                        .article img { max-width: 200px; height: auto; border-radius: 8px; }
+                        .article-title { font-family: 'Roboto Slab', serif; font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
+                        .article-text { font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #64748b; }
+                        .qr-section { text-align: center; margin-top: 1rem; padding: 1rem; border-top: 2px solid #1e3a8a; }
+                        .qr-section h3 { font-family: 'Roboto Slab', serif; font-size: 16px; font-weight: 600; margin-bottom: 0.5rem; }
+                        .qr-section h4 { font-family: 'Roboto Slab', serif; font-size: 14px; font-weight: 500; margin-bottom: 0.5rem; }
+                        .qr-section img { width: 80px; height: 80px; margin: 0.5rem auto; }
+                        .newsletter-footer { background: #f8fafc; padding: 1rem; text-align: center; color: #64748b; border-top: 3px solid #1e3a8a; page-break-inside: avoid; }
+                        .style-hero { background: #f8fafc; padding: 2rem; text-align: center; }
+                        .style-hero .article-image { max-width: 100%; margin-bottom: 1rem; }
+                        .style-sidebyside { display: flex; align-items: center; gap: 1rem; }
+                        .style-sidebyside .article-image { flex: 1; max-width: 50%; }
+                        .style-sidebyside .article-content { flex: 1; }
+                        .style-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                        .style-magazine { background: white; padding: 1rem; border-left: 4px solid #1e3a8a; }
+                        .style-overlay { position: relative; color: white; }
+                        .style-overlay .article-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+                        .style-overlay .article-content { background: linear-gradient(transparent, rgba(0,0,0,0.😎); color: white; padding: 1rem; width: 100%; }
+                        .style-minimal { background: #f8fafc; padding: 1rem; text-align: center; }
+                        .style-minimal .article-image { max-width: 200px; margin-bottom: 0.5rem; }
+                        @media print {
+                            .newsletter { margin: 0; }
+                            .article, .newsletter-header, .newsletter-footer { break-inside: avoid; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="newsletter">${newsletter}</div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+            printWindow.onafterprint = () => {
+                const blob = new Blob([newsletter], { type: 'text/html' });
+                saveAs(blob, `IPA_Newsletter_${document.getElementById('newsletterYear').value}_${document.getElementById('newsletterMonth').value}.pdf`);
+                showStatus(translations.el.pdfExported, 'success');
+                printWindow.close();
+            };
+        }
+
+        // Share Online
+        async function shareOnline() {
+            const newsletter = document.getElementById('newsletterPreview').innerHTML;
+            const title = document.getElementById('newsletterTitle').value;
+            const month = document.getElementById('newsletterMonth').value;
+            const year = document.getElementById('newsletterYear').value;
+
+            try {
+                const user = auth.currentUser;
+                if (user) {
+                    const newsletterRef = db.ref('newsletters').push();
+                    await newsletterRef.set({
+                        title,
+                        month,
+                        year,
+                        content: newsletter,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    const shareUrl = `https://your-app-url.com/newsletter/${newsletterRef.key}`;
+                    showStatus(`${translations.el.shareSuccess} URL: ${shareUrl}`, 'success');
+                } else {
+                    showStatus(translations.el.shareError, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus(translations.el.shareError, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
